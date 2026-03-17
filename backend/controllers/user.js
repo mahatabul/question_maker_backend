@@ -36,10 +36,10 @@ const login = async (req, res) => {
     );
     return token;
   };
-  
+
   const token = createToken(user, process.env.JWT_LIFETIME);
 
-  res.status(StatusCodes.ACCEPTED).json({ token: token, email: user.email });
+  res.status(StatusCodes.OK).json({ token: token, email: user.email });
 };
 
 const register = async (req, res) => {
@@ -65,7 +65,7 @@ const register = async (req, res) => {
   });
 };
 
-const verifyUser = async (req, res, next) => {
+const verifyUser = async (req, res) => {
   const { token } = req.params;
 
   const payload = jwt.verify(token, process.env.JWT_SECRET);
@@ -88,4 +88,16 @@ const verifyUser = async (req, res, next) => {
   res.status(StatusCodes.OK).json({ msg: "User verification successful" });
 };
 
-module.exports = { login, register, verifyUser };
+const getprofile = async (req, res) => {
+  const userId = req.user.userId;
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
+  }
+
+  res.status(StatusCodes.OK).json({ msg: "User found", user: user });
+};
+
+module.exports = { login, register, verifyUser, getprofile };

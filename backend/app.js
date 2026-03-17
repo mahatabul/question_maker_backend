@@ -7,11 +7,13 @@ const { notFound, errorHandlerMiddleware } = require("./middleware");
 require("dotenv").config();
 
 const mainrouter = require("./routes/user.js");
+const walletrouter = require("./routes/wallet.js");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use("/api/v1", mainrouter);
+app.use("/api/v1/wallet", walletrouter);
 
 app.use(notFound);
 app.use(errorHandlerMiddleware);

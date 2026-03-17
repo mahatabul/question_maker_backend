@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       enum: ["student", "teacher"], // Restricts values to these two options
       default: "student",
     },
+    credits: {
+      type: Number,
+      default: 100, // starting credits when user registers
+    },
     isVerified: {
       type: Boolean,
       default: false,
