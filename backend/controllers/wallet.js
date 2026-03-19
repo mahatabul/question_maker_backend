@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 const User = require("../models/user");
 const { StatusCodes } = require("http-status-codes");
 const Transaction = require("../models/transaction");
@@ -77,49 +77,6 @@ const history = async (req, res) => {
   });
 };
 
-const useCredits = async (req, res) => {
-  const cost = 10;
 
-  const session = await mongoose.startSession();
-
-  try {
-    session.startTransaction();
-
-    const user = await User.findById(req.user.userId).session(session);
-
-    if (user.credits < cost) {
-      throw new Error("Not enough credits");
-    }
-
-    user.credits -= cost;
-    await user.save({ session });
-
-    await Transaction.create(
-      [
-        {
-          user: user._id,
-          amount: cost,
-          type: "debit",
-          reason: "feature usage",
-        },
-      ],
-      { session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
-
-    res.json({
-      msg: "Credits used",
-      remaining: user.credits,
-    });
-
-  } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
-
-    res.status(400).json({ msg: err.message });
-  }
-};
 
 module.exports = { recharge, balance, history };
