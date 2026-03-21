@@ -1,18 +1,25 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const connectDB = require("./db/connect.js");
 const app = express();
 
 const { notFound, errorHandlerMiddleware } = require("./middleware");
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
+
+app.use("/api/", limiter);
 require("dotenv").config();
 
-const mainrouter = require("./routes/user.js");
+const user_router = require("./routes/user.js");
 const walletrouter = require("./routes/wallet.js");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use("/api/v1", mainrouter);
+app.use("/api/v1", user_router);
 app.use("/api/v1/wallet", walletrouter);
 
 app.use(notFound);

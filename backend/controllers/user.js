@@ -72,7 +72,7 @@ const forgotPassword = async (req, res) => {
   const user = await User.findOne({ email });
 
   if (!user) {
-    return res.status(404).json({ msg: "User not found" });
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
   }
 
   // 🔐 generate raw token
@@ -97,7 +97,7 @@ const forgotPassword = async (req, res) => {
     html: `<p>Click <a href="${resetLink}">here</a></p>`,
   });
 
-  res.json({ msg: "Reset link sent" });
+  res.status(StatusCodes.OK).json({ msg: "Reset link sent" });
 };
 
 const verifyUser = async (req, res) => {
@@ -140,8 +140,7 @@ const resetPassword = async (req, res) => {
 
   const user = req.resetUser; // already verified
 
-  const salt = await bcrypt.genSalt(10);
-  user.password = await bcrypt.hash(newPassword, salt);
+  user.password = newPassword;
 
   // ❌ invalidate token (IMPORTANT)
   user.passwordResetToken = undefined;
