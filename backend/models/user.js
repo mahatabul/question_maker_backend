@@ -33,6 +33,13 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 100, // starting credits when user registers
     },
+    failedloginattemps: {
+      type: Number,
+      default: 0,
+    },
+    lastLoginfail: {
+      type: Date,
+    },
     isVerified: {
       type: Boolean,
       default: false,

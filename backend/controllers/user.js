@@ -3,6 +3,7 @@ const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 const bcryptjs = require("bcryptjs");
 const sendEmail = require("../utils/sendEmail");
+const getDelay = require("../utils/delay");
 const crypto = require("crypto");
 
 const login = async (req, res) => {
@@ -13,15 +14,39 @@ const login = async (req, res) => {
   if (!user) {
     return res
       .status(StatusCodes.UNAUTHORIZED)
-      .json({ msg: "Invalid Username" });
+      .json({ msg: "Invalid credentials" });
   }
+
+  if (user.failedloginattemps > 0 && user.lastLoginfail) {
+    const delay = getDelay(user.failedloginattemps);
+    const timePassed = Math.ceil(Date.now() - user.lastLoginfail.getTime());
+
+    if (delay > timePassed) {
+      const wait = Math.ceil((delay - timePassed) / 1000);
+      return res.status(StatusCodes.TOO_MANY_REQUESTS).json({
+        msg: `Too many attempts. Try again in ${wait}s`,
+      });
+    }
+
+    
+  }
+
   const isMatch = await bcryptjs.compare(password, user.password);
 
   if (!isMatch) {
+    user.failedloginattemps += 1;
+    user.lastLoginfail = new Date();
+
+    await user.save();
     return res
       .status(StatusCodes.UNAUTHORIZED)
       .json({ msg: "Invalid credentials" });
   }
+
+  user.failedloginattemps = 0;
+  user.lastLoginfail = undefined;
+
+  await user.save();
 
   if (!user.isVerified) {
     return res.status(403).json({
