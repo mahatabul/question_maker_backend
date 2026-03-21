@@ -7,7 +7,7 @@ const {
   resetPassword,
 } = require("../controllers/user");
 
-const { loginvalidation, registervalidation } = require("../validators");
+const { loginvalidation, registervalidation,forgotPasswordvalidation } = require("../validators");
 
 const express = require("express");
 const router = express.Router();
@@ -20,6 +20,6 @@ router.route("/verify/:token").get(verifyUser);
 router.route("/getprofile").get(authmiddleware, getprofile);
 
 router.route("/reset-password/:token").post(verifyResetToken, resetPassword);
-router.route("/forgot-password").post(forgotPassword);
+router.route("/forgot-password").post(forgotPasswordvalidation,forgotPassword);
 
 module.exports = router;
