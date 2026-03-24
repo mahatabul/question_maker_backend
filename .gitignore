@@ -1,7 +1,6 @@
 backend/node_modules
 backend/.env
-venv/
-py_backend/venv/
+py_backend/venv
 # Logs
 logs
 *.log
