@@ -15,12 +15,14 @@ require("dotenv").config();
 
 const user_router = require("./routes/user.js");
 const walletrouter = require("./routes/wallet.js");
+const feature_router = require("./routes/features.js")
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use("/api/v1", user_router);
 app.use("/api/v1/wallet", walletrouter);
+app.use("/api/v1/features",feature_router);
 
 app.use(notFound);
 app.use(errorHandlerMiddleware);
