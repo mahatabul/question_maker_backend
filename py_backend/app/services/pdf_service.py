@@ -1,4 +1,4 @@
-from reportlab.platypus import (
+from reportlab.platypus import ( # type: ignore
     BaseDocTemplate,
     Frame,
     PageTemplate,
@@ -6,14 +6,13 @@ from reportlab.platypus import (
     Spacer,
     NextPageTemplate,
     Flowable,
-)
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.pagesizes import A4
+) 
+from reportlab.pdfbase.ttfonts import TTFont # type: ignore
+from reportlab.pdfbase import pdfmetrics # type: ignore
+from reportlab.lib.styles import ParagraphStyle # type: ignore
+from reportlab.lib.pagesizes import A4 # type: ignore
 import uuid
 import re
-
 
 class MCQOption(Flowable):
     
@@ -38,7 +37,7 @@ class MCQOption(Flowable):
         )
         self._para = Paragraph(text, self._style)
 
-    def wrap(self, availWidth, availHeight):
+    def wrap(self, availWidth, availHeight): # type: ignore
         self.width = availWidth
 
      
@@ -186,13 +185,13 @@ def create_pdf(data):
     letters = ["A", "B", "C", "D"]
 
     for i, q in enumerate(questions, 1):
-        content.append(Paragraph(f"{i}. {q['question']}", question_style))
+        content.append(Paragraph(f"{i}. {q['question']}", question_style)) # type: ignore
 
         for j, opt in enumerate(q["options"]):
             text = re.sub(r"^[A-D]\.\s*", "", opt)
-            content.append(MCQOption(letters[j], text))
+            content.append(MCQOption(letters[j], text)) # type: ignore
 
-        content.append(Spacer(1, 8))
+        content.append(Spacer(1, 8)) # type: ignore
 
-    doc.build(content)
+    doc.build(content) # type: ignore
     return filename

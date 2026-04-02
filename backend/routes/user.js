@@ -19,7 +19,7 @@ const router = express.Router();
 const authmiddleware = require("../middleware/auth");
 const verifyResetToken = require("../middleware/verifyResetTokenMiddleware");
 
-router.route("/login").get(loginvalidation, login);
+router.route("/login").post(loginvalidation, login);
 router.route("/register").post(registervalidation, register);
 router.route("/verify/:token").get(verifyUser);
 router.route("/getprofile").get(authmiddleware, getprofile);

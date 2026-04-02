@@ -2,8 +2,21 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 const connectDB = require("./db/connect.js");
 const app = express();
+const cors = require('cors')
+
+// Configure CORS specifically for your React app
+const corsOptions = {
+  origin: 'http://localhost:5173', // Your React app URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
+  credentials: true, // Allow cookies/auth headers
+  optionsSuccessStatus: 200 // For legacy browsers
+};
+
+app.use(cors(corsOptions))
 
 const { notFound, errorHandlerMiddleware } = require("./middleware");
+
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -18,7 +31,7 @@ const walletrouter = require("./routes/wallet.js");
 const feature_router = require("./routes/features.js")
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1", user_router);
 app.use("/api/v1/wallet", walletrouter);
