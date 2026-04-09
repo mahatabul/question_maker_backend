@@ -5,6 +5,7 @@ const {
   getprofile,
   forgotPassword,
   resetPassword,
+  changePassword
 } = require("../controllers/user");
 
 const {
@@ -28,5 +29,8 @@ router
   .route("/reset-password/:token")
   .post(verifyResetToken, resetPasswordvalidation, resetPassword);
 router.route("/forgot-password").post(forgotPasswordvalidation, forgotPassword);
+// In your routes file
+router.route("/change-password")
+  .post(authmiddleware, changePassword); // Protected route
 
 module.exports = router;

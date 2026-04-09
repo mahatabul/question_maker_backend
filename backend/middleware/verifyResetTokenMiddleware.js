@@ -3,8 +3,16 @@ const { StatusCodes } = require("http-status-codes");
 const User = require("../models/user");
 
 const verifyResetToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer")) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      msg: "Authorization token not provided",
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
   try {
-    const { token } = req.params;
 
     // 🔐 hash incoming token
     const hashedToken = crypto

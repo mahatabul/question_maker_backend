@@ -28,7 +28,7 @@ const login = async (req, res) => {
       });
     }
 
-    
+
   }
 
   const isMatch = await bcryptjs.compare(password, user.password);
@@ -91,39 +91,6 @@ const register = async (req, res) => {
   });
 };
 
-const forgotPassword = async (req, res) => {
-  const { email } = req.body;
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
-  }
-
-  // 🔐 generate raw token
-  const resetToken = crypto.randomBytes(32).toString("hex");
-
-  // 🔐 hash token (store hashed version)
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-
-  user.passwordResetToken = hashedToken;
-  user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 min
-
-  await user.save();
-
-  const resetLink = `${process.env.BASE_URL}/api/v1/reset-password/${resetToken}`;
-
-  await sendEmail({
-    to: user.email,
-    subject: "Reset Password",
-    html: `<p>Click <a href="${resetLink}">here</a></p>`,
-  });
-
-  res.status(StatusCodes.OK).json({ msg: "Reset link sent" });
-};
 
 const verifyUser = async (req, res) => {
   const { token } = req.params;
@@ -160,6 +127,40 @@ const getprofile = async (req, res) => {
   res.status(StatusCodes.OK).json({ msg: "User found", user: user });
 };
 
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
+  }
+
+  // 🔐 generate raw token
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  // 🔐 hash token (store hashed version)
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  user.passwordResetToken = hashedToken;
+  user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 min
+
+  await user.save();
+
+  const resetLink = `${process.env.BASE_URL}/api/v1/reset-password/${resetToken}`;
+
+  await sendEmail({
+    to: user.email,
+    subject: "Reset Password",
+    html: `<p>Click <a href="${resetLink}">here</a></p>`,
+  });
+
+  res.status(StatusCodes.OK).json({ msg: "Reset link sent" });
+};
+
 const resetPassword = async (req, res) => {
   const { newPassword } = req.body;
 
@@ -176,6 +177,61 @@ const resetPassword = async (req, res) => {
   res.json({ msg: "Password reset successful" });
 };
 
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword, confirmNewPassword } = req.body;
+  const userId = req.user.userId;
+
+  if (newPassword !== confirmNewPassword) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "New passwords do not match"
+    });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "Password must be at least 6 characters long"
+    });
+  }
+
+  const user = await User.findById(userId).select("+password");
+  if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json({
+      msg: "User not found"
+    });
+  }
+
+  const isPasswordCorrect = await bcryptjs.compare(currentPassword, user.password);
+  if (!isPasswordCorrect) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "Current password is incorrect"
+    });
+  }
+
+  const isSamePassword = await bcryptjs.compare(newPassword, user.password);
+  if (isSamePassword) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "New password must be different from current password"
+    });
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: "Password Changed",
+      html: "<p>Your password has been changed successfully.</p>"
+    });
+  } catch (emailError) {
+    console.error("Failed to send email notification:", emailError);
+  }
+
+  res.status(StatusCodes.OK).json({
+    msg: "Password changed successfully"
+  });
+};
+
 module.exports = {
   login,
   register,
@@ -183,4 +239,5 @@ module.exports = {
   getprofile,
   forgotPassword,
   resetPassword,
+  changePassword,
 };
