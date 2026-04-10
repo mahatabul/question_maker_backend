@@ -136,45 +136,97 @@ const forgotPassword = async (req, res) => {
     return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
   }
 
-  // 🔐 generate raw token
-  const resetToken = crypto.randomBytes(32).toString("hex");
-
-  // 🔐 hash token (store hashed version)
-  const hashedToken = crypto
+  // Generate 6-digit PIN code
+  const pinCode = Math.floor(100000 + Math.random()  * 900000).toString();
+  
+  // Hash the PIN for storage
+  const hashedPIN = crypto
     .createHash("sha256")
-    .update(resetToken)
+    .update(pinCode)
     .digest("hex");
 
-  user.passwordResetToken = hashedToken;
-  user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 min
-
-  await user.save();
-
-  const resetLink = `${process.env.BASE_URL}/api/v1/reset-password/${resetToken}`;
-
-  await sendEmail({
-    to: user.email,
-    subject: "Reset Password",
-    html: `<p>Click <a href="${resetLink}">here</a></p>`,
-  });
-
-  res.status(StatusCodes.OK).json({ msg: "Reset link sent" });
-};
-
-const resetPassword = async (req, res) => {
-  const { newPassword } = req.body;
-
-  const user = req.resetUser; // already verified
-
-  user.password = newPassword;
-
-  // ❌ invalidate token (IMPORTANT)
+  // Store hashed PIN and expiry
+  user.passwordResetPIN = hashedPIN;
+  user.passwordResetPINExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  
+  // Clear any existing reset tokens
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
 
   await user.save();
 
-  res.json({ msg: "Password reset successful" });
+  // Send PIN via email
+  await sendEmail({
+    to: user.email,
+    subject: "Password Reset PIN Code",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Password Reset Request</h2>
+        <p>You requested to reset your password. Here is your PIN code:</p>
+        <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; letter-spacing: 5px; font-weight: bold; border-radius: 8px;">
+          ${pinCode}
+        </div>
+        <p>This PIN will expire in 10 minutes.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+        <hr style="margin: 20px 0;">
+        <p style="color: #666; font-size: 12px;">This is an automated message, please do not reply.</p>
+      </div>
+    `,
+  });
+
+  res.status(StatusCodes.OK).json({ 
+    msg: "PIN code sent to your email",
+    email: user.email // Send email back to frontend for verification step
+  });
+};
+
+const resetPassword = async (req, res) => {
+  const { newPassword, confirmNewPassword } = req.body;
+  const user = req.resetUser;
+
+  // Check if passwords match
+  if (newPassword !== confirmNewPassword) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "Passwords do not match"
+    });
+  }
+
+  // Validate password strength
+  if (newPassword.length < 6) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "Password must be at least 6 characters long"
+    });
+  }
+
+  
+  user.password = newPassword;
+  
+  
+  user.passwordResetPIN = undefined;
+  user.passwordResetPINExpires = undefined;
+
+  await user.save();
+
+  // Send confirmation email
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: "Password Changed Successfully",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Password Changed</h2>
+          <p>Your password has been successfully changed.</p>
+          <p>If you didn't make this change, please contact support immediately.</p>
+        </div>
+      `,
+    });
+  } catch (emailError) {
+    console.error("Failed to send confirmation email:", emailError);
+  }
+
+  res.status(StatusCodes.OK).json({ 
+    msg: "Password reset successful! You can now login with your new password."
+  });
 };
 
 const changePassword = async (req, res) => {
@@ -240,4 +292,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   changePassword,
+
 };

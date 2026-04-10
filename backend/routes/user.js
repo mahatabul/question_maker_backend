@@ -25,12 +25,9 @@ router.route("/register").post(registervalidation, register);
 router.route("/verify/:token").get(verifyUser);
 router.route("/getprofile").get(authmiddleware, getprofile);
 
-router
-  .route("/reset-password/:token")
-  .post(verifyResetToken, resetPasswordvalidation, resetPassword);
+router.route("/reset-password").post(verifyResetToken, resetPasswordvalidation, resetPassword);
 router.route("/forgot-password").post(forgotPasswordvalidation, forgotPassword);
-// In your routes file
-router.route("/change-password")
-  .post(authmiddleware, changePassword); // Protected route
+
+router.route("/change-password").post(authmiddleware, changePassword);
 
 module.exports = router;

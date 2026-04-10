@@ -1,52 +1,39 @@
+// middleware/verifyPIN.js
 const crypto = require("crypto");
 const { StatusCodes } = require("http-status-codes");
 const User = require("../models/user");
 
-const verifyResetToken = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+const verifyPIN = async (req, res, next) => {
+  const { pin } = req.body;
 
-  if (!authHeader || !authHeader.startsWith("Bearer")) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      msg: "Authorization token not provided",
+  if (!pin) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "PIN code is required"
     });
   }
 
-  const token = authHeader.split(" ")[1];
-  try {
+  // Hash the provided PIN
+  const hashedPIN = crypto
+    .createHash("sha256")
+    .update(pin)
+    .digest("hex");
 
-    // 🔐 hash incoming token
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
+  // Find user with matching PIN that hasn't expired
+  const user = await User.findOne({
+    passwordResetPIN: hashedPIN,
+    passwordResetPINExpires: { $gt: Date.now() },
+  });
 
-    // 🔍 find user with matching token + valid expiry
-    const user = await User.findOne({
-      passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: Date.now() },
+  if (!user) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "Invalid or expired PIN code"
     });
-
-    if (!user) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ msg: "Invalid or expired token" });
-    }
-
-    // ✅ attach user to req
-    req.user = {
-      userId: user._id,
-      role: user.role,
-    };
-
-    // also pass full user if needed
-    req.resetUser = user;
-
-    next();
-  } catch (error) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Token verification failed" });
   }
+
+  // Attach user to request object
+  req.resetUser = user;
+  
+  next();
 };
 
-module.exports = verifyResetToken;
+module.exports = verifyPIN;

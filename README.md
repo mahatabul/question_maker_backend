@@ -93,8 +93,6 @@ MONGO_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
 JWT_LIFETIME=1d
 
-JWT_RESET_SECRET=your_reset_secret
-
 BASE_URL=your_base_url
 
 SMTP_HOST=smtp.gmail.com
