@@ -3,6 +3,7 @@ const Joi = require("joi");
 const loginschema = Joi.object({
   username: Joi.string().min(3).max(6).required(),
   password: Joi.string().min(6).required(),
+  rememberMe: Joi.boolean().optional(),
 }).unknown(false);
 
 const loginvalidation = (req, res, next) => {

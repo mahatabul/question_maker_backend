@@ -6,8 +6,17 @@ const sendEmail = require("../utils/sendEmail");
 const getDelay = require("../utils/delay");
 const crypto = require("crypto");
 
+const createToken = (user, expiry) => {
+  const token = jwt.sign(
+    { userId: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: expiry },
+  );
+  return token;
+};
+
 const login = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, rememberMe } = req.body;
 
   const user = await User.findOne({ username }).select("+password");
 
@@ -54,16 +63,8 @@ const login = async (req, res) => {
     });
   }
 
-  const createToken = (user, expiry) => {
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: expiry },
-    );
-    return token;
-  };
-
-  const token = createToken(user, process.env.JWT_LIFETIME);
+  const expiry = rememberMe ? '30d' : process.env.JWT_LIFETIME;
+  const token = createToken(user, expiry);
 
   res.status(StatusCodes.OK).json({ msg: "Login Successfull", token: token });
 };
@@ -73,11 +74,8 @@ const register = async (req, res) => {
 
   const user = await User.create({ username, email, password, role });
 
-  const temptoken = jwt.sign(
-    { userId: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_TEMP },
-  );
+  const temptoken = createToken(user, process.env.JWT_TEMP);
+
   const verification_link = `${process.env.FRONTEND_URL}/verify/${temptoken}`;
 
   await sendEmail({
