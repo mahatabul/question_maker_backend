@@ -78,12 +78,19 @@ const register = async (req, res) => {
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_TEMP },
   );
-  const verification_link = `${process.env.BASE_URL}/api/v1/verify/${temptoken}`;
+  const verification_link = `${process.env.FRONTEND_URL}/verify/${temptoken}`;
 
   await sendEmail({
     to: user.email,
     subject: "Verify your account",
-    html: `<p>Here is your link: <a href=${verification_link}>Verification link</a>..</p>`,
+    html: `
+    <div>
+      <h2>Welcome to Question Maker!</h2>
+      <p>Please click the link below to verify your email:</p>
+      <a href="${verification_link}">Verify Email</a>
+      <p>This link will expire in 24 hours.</p>
+    </div>
+  `,
   });
 
   res.status(StatusCodes.CREATED).json({
@@ -137,8 +144,8 @@ const forgotPassword = async (req, res) => {
   }
 
   // Generate 6-digit PIN code
-  const pinCode = Math.floor(100000 + Math.random()  * 900000).toString();
-  
+  const pinCode = Math.floor(100000 + Math.random() * 900000).toString();
+
   // Hash the PIN for storage
   const hashedPIN = crypto
     .createHash("sha256")
@@ -148,7 +155,7 @@ const forgotPassword = async (req, res) => {
   // Store hashed PIN and expiry
   user.passwordResetPIN = hashedPIN;
   user.passwordResetPINExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-  
+
   // Clear any existing reset tokens
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
@@ -174,7 +181,7 @@ const forgotPassword = async (req, res) => {
     `,
   });
 
-  res.status(StatusCodes.OK).json({ 
+  res.status(StatusCodes.OK).json({
     msg: "PIN code sent to your email",
     email: user.email // Send email back to frontend for verification step
   });
@@ -198,10 +205,10 @@ const resetPassword = async (req, res) => {
     });
   }
 
-  
+
   user.password = newPassword;
-  
-  
+
+
   user.passwordResetPIN = undefined;
   user.passwordResetPINExpires = undefined;
 
@@ -224,7 +231,7 @@ const resetPassword = async (req, res) => {
     console.error("Failed to send confirmation email:", emailError);
   }
 
-  res.status(StatusCodes.OK).json({ 
+  res.status(StatusCodes.OK).json({
     msg: "Password reset successful! You can now login with your new password."
   });
 };
