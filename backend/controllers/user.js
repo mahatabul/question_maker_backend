@@ -66,7 +66,8 @@ const login = async (req, res) => {
   const expiry = rememberMe ? '30d' : process.env.JWT_LIFETIME;
   const token = createToken(user, expiry);
 
-  res.status(StatusCodes.OK).json({ msg: "Login Successfull", token: token });
+
+  res.status(StatusCodes.OK).json({ msg: "Login Successfull", token: token, user: { username: user.username, email: user.email } });
 };
 
 const register = async (req, res) => {
