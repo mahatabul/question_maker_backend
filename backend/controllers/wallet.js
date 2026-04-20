@@ -5,49 +5,49 @@ const Transaction = require("../models/transaction");
 
 const recharge = async (req, res) => {
   const { amount } = req.body;
+  const max_credit = Number(process.env.MAX_CREDIT);
 
   if (!amount || amount <= 0) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Invalid recharge amount" });
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Invalid recharge amount" });
   }
 
-  const session = await mongoose.startSession();
-
   try {
-    session.startTransaction();
-    const user = await User.findById(req.user.userId).session(session);
+    // 1. Get current user data (to check limit)
+    const user = await User.findById(req.user.userId);
     if (!user) {
       return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
     }
 
-    user.credits += amount;
-    await user.save({ session });
+    // 2. Validate credit limit
+    const newCredits = user.credits + amount;
+    if (newCredits > max_credit) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        msg: `Cannot add ${amount} credits. Maximum allowed is ${max_credit}. You currently have ${user.credits} credits.`
+      });
+    }
 
-    await Transaction.create(
-      [
-        {
-          user: user._id,
-          amount: amount,
-          type: "credit",
-          reason: "wallet recharge",
-        },
-      ],
-      { session },
+    // 3. Update credits atomically
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.userId,
+      { $inc: { credits: amount } },
+      { new: true, runValidators: true }
     );
 
-    await session.commitTransaction();
-    session.endSession();
+    // 4. Record transaction
+    await Transaction.create({
+      user: updatedUser._id,
+      amount: amount,
+      type: "credit",
+      reason: "credit recharge",
+    });
 
     res.status(StatusCodes.OK).json({
       msg: "Recharge successful",
-      credits: user.credits,
+      credits: updatedUser.credits,
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-
-    res.status(400).json({
+    console.error(error);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       msg: error.message,
     });
   }
