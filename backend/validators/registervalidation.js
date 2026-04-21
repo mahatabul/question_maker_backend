@@ -4,7 +4,7 @@ const registerschema = Joi.object({
   username: Joi.string().min(3).max(6).required(),
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
-  role: Joi.string().valid("student", "teacher").optional(),
+  role: Joi.string().valid("student", "teacher").required(),
 }).unknown(false);
 
 const registervalidation = (req, res, next) => {

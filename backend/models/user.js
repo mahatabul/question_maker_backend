@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["student", "teacher"], // Restricts values to these two options
+      enum: ["student", "teacher", "admin"], // Restricts values to these two options
       default: "student",
     },
     credits: {
