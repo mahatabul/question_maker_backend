@@ -42,9 +42,12 @@ app.use("/api/v1/features", feature_router);
 app.use(notFound);
 app.use(errorHandlerMiddleware);
 
+const {startTelegramListener} = require("./utils/telegramListener.js") 
+
 const port = process.env.PORT || 5000;
 const start = async () => {
   await connectDB(process.env.MONGO_URI);
+  startTelegramListener();
   app.listen(port, () => {
     console.log(`Listing to port ${port}`);
   });

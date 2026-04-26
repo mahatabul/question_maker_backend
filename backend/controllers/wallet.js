@@ -117,49 +117,49 @@ const processRechargeRequest = async (req, res) => {
 };
 
 // Direct recharge (instant, without admin approval)
-const recharge = async (req, res) => {
-  const { amount } = req.body;
-  const maxCredit = Number(process.env.MAX_CREDIT) || 2000;
+// const recharge = async (req, res) => {
+//   const { amount } = req.body;
+//   const maxCredit = Number(process.env.MAX_CREDIT) || 2000;
 
-  if (!amount || amount <= 0) {
-    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Invalid recharge amount" });
-  }
+//   if (!amount || amount <= 0) {
+//     return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Invalid recharge amount" });
+//   }
 
-  try {
-    const user = await User.findById(req.user.userId);
-    if (!user) {
-      return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
-    }
+//   try {
+//     const user = await User.findById(req.user.userId);
+//     if (!user) {
+//       return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
+//     }
 
-    const newCredits = user.credits + amount;
-    if (newCredits > maxCredit) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        msg: `Cannot add ${amount} credits. Maximum allowed is ${maxCredit}. You currently have ${user.credits} credits.`
-      });
-    }
+//     const newCredits = user.credits + amount;
+//     if (newCredits > maxCredit) {
+//       return res.status(StatusCodes.BAD_REQUEST).json({
+//         msg: `Cannot add ${amount} credits. Maximum allowed is ${maxCredit}. You currently have ${user.credits} credits.`
+//       });
+//     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.userId,
-      { $inc: { credits: amount } },
-      { new: true, runValidators: true }
-    );
+//     const updatedUser = await User.findByIdAndUpdate(
+//       req.user.userId,
+//       { $inc: { credits: amount } },
+//       { new: true, runValidators: true }
+//     );
 
-    await Transaction.create({
-      user: updatedUser._id,
-      amount,
-      type: "credit",
-      reason: "credit recharge",
-    });
+//     await Transaction.create({
+//       user: updatedUser._id,
+//       amount,
+//       type: "credit",
+//       reason: "credit recharge",
+//     });
 
-    res.status(StatusCodes.OK).json({
-      msg: "Recharge successful",
-      credits: updatedUser.credits,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: error.message });
-  }
-};
+//     res.status(StatusCodes.OK).json({
+//       msg: "Recharge successful",
+//       credits: updatedUser.credits,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: error.message });
+//   }
+// };
 
 const balance = async (req, res) => {
   const user = await User.findById(req.user.userId).select("credits");
@@ -178,7 +178,6 @@ const history = async (req, res) => {
 };
 
 module.exports = {
-  recharge,
   balance,
   history,
   createRechargeRequest,

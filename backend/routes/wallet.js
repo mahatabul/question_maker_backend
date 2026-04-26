@@ -1,9 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const authmiddleware = require("../middleware/auth");
-const isAdmin = require("../middleware/isAdmin"); // you need to create this middleware
+const isAdmin = require("../middleware/isAdmin");
 const {
-  recharge,
   balance,
   history,
   createRechargeRequest,
@@ -13,7 +12,7 @@ const {
 } = require("../controllers/wallet");
 
 // User routes
-router.route("/recharge").post(authmiddleware, recharge);
+// router.route("/recharge").post(authmiddleware, recharge);
 router.route("/balance").get(authmiddleware, balance);
 router.route("/history").get(authmiddleware, history);
 
