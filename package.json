@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "node-telegram-bot-api": "^0.67.0"
+    "node-telegram-bot-api": "^0.67.0",
+    "telegram": "^2.26.22"
   }
 }
